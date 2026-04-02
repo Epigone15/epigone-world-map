@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carte du Monde à Colorier</title>
+    <title>Carte du Monde à Colorier (Pays Entiers)</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Leaflet-Geojson CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-geojson@2.0.0/leaflet-geojson.css" />
     <style>
         body {
             margin: 0;
@@ -59,7 +61,7 @@
     </style>
 </head>
 <body>
-    <h1>Carte du Monde à Colorier</h1>
+    <h1>Carte du Monde à Colorier (Pays Entiers)</h1>
     <div class="info-panel">
         <p><strong>Instructions :</strong></p>
         <p>1. Choisis une couleur dans la palette.</p>
@@ -72,6 +74,8 @@
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Leaflet-Geojson JS -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-geojson@2.0.0/leaflet-geojson.js"></script>
     <script>
         // Initialisation de la carte
         const map = L.map('map').setView([20, 0], 2);
@@ -107,45 +111,57 @@
         // Chargement des pays coloriés
         const coloredCountries = JSON.parse(localStorage.getItem('coloredCountries')) || {};
 
+        // Style par défaut pour les pays
+        function getCountryStyle(countryId) {
+            return {
+                fillColor: coloredCountries[countryId] || '#dddddd',
+                weight: 1,
+                opacity: 1,
+                color: '#888',
+                fillOpacity: 0.8
+            };
+        }
+
         // Fonction pour appliquer la couleur à un pays
         function colorCountry(countryId, color) {
-            const countryLayer = window.countryLayers[countryId];
-            if (countryLayer) {
-                countryLayer.setStyle({ fillColor: color });
+            coloredCountries[countryId] = color;
+            localStorage.setItem('coloredCountries', JSON.stringify(coloredCountries));
+            if (window.countryLayers && window.countryLayers[countryId]) {
+                window.countryLayers[countryId].setStyle({ fillColor: color });
             }
         }
 
-        // Exemple de pays (tu peux ajouter plus de pays)
-        const countries = [
-            { id: 'FR', name: 'France', lat: 46.2276, lng: 2.2137 },
-            { id: 'DE', name: 'Allemagne', lat: 51.1657, lng: 10.4515 },
-            { id: 'IT', name: 'Italie', lat: 41.8719, lng: 12.5674 },
-            { id: 'ES', name: 'Espagne', lat: 40.4637, lng: -3.7492 },
-            { id: 'US', name: 'États-Unis', lat: 37.0902, lng: -95.7129 },
-            { id: 'JP', name: 'Japon', lat: 36.2048, lng: 138.2529 }
-        ];
+        // Exemple de GeoJSON simplifié pour les pays (tu peux remplacer par un vrai GeoJSON)
+        const countriesGeoJSON = {
+            "type": "FeatureCollection",
+            "features": [
+                { "type": "Feature", "properties": { "name": "France", "id": "FR" }, "geometry": { "type": "Polygon", "coordinates": [ [ [2.2137, 46.2276], [2.2137, 46.2276] ] ] } },
+                { "type": "Feature", "properties": { "name": "Allemagne", "id": "DE" }, "geometry": { "type": "Polygon", "coordinates": [ [ [10.4515, 51.1657], [10.4515, 51.1657] ] ] } },
+                { "type": "Feature", "properties": { "name": "Italie", "id": "IT" }, "geometry": { "type": "Polygon", "coordinates": [ [ [12.5674, 41.8719], [12.5674, 41.8719] ] ] } },
+                { "type": "Feature", "properties": { "name": "Espagne", "id": "ES" }, "geometry": { "type": "Polygon", "coordinates": [ [ [-3.7492, 40.4637], [-3.7492, 40.4637] ] ] } },
+                { "type": "Feature", "properties": { "name": "États-Unis", "id": "US" }, "geometry": { "type": "Polygon", "coordinates": [ [ [-95.7129, 37.0902], [-95.7129, 37.0902] ] ] } },
+                { "type": "Feature", "properties": { "name": "Japon", "id": "JP" }, "geometry": { "type": "Polygon", "coordinates": [ [ [138.2529, 36.2048], [138.2529, 36.2048] ] ] } }
+            ]
+        };
 
-        // Création des couches de pays (simplifié pour l'exemple)
-        window.countryLayers = {};
-        countries.forEach(country => {
-            const marker = L.circleMarker([country.lat, country.lng], {
-                radius: 10,
-                fillColor: coloredCountries[country.id] || '#dddddd',
-                color: '#000',
-                weight: 1,
-                opacity: 1,
-                fillOpacity: 0.8
-            }).addTo(map);
-            window.countryLayers[country.id] = marker;
-            marker.bindPopup(`<b>${country.name}</b>`);
-
-            // Gestion du clic
-            marker.on('click', () => {
-                colorCountry(country.id, selectedColor);
-                coloredCountries[country.id] = selectedColor;
-                localStorage.setItem('coloredCountries', JSON.stringify(coloredCountries));
+        // Ajout des pays à la carte
+        const countryLayers = {};
+        countriesGeoJSON.features.forEach(feature => {
+            const countryId = feature.properties.id;
+            const countryName = feature.properties.name;
+            const geojson = L.geoJSON(feature, {
+                style: getCountryStyle(countryId),
+                onEachFeature: function (feature, layer) {
+                    layer.bindPopup(`<b>${countryName}</b>`);
+                    layer.on('click', () => {
+                        colorCountry(countryId, selectedColor);
+                    });
+                }
             });
+            geojson.addTo(map);
+            countryLayers[countryId] = geojson;
         });
+        window.countryLayers = countryLayers;
     </script>
 </body>
 </html>
