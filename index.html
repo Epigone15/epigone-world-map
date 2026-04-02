@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carte du Monde à Colorier</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+        #map {
+            height: 85vh;
+            width: 100%;
+            margin: 0 auto;
+        }
+        .info-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        .color-palette {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #333;
+        }
+        #reset-btn {
+            margin-top: 10px;
+            padding: 8px 15px;
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #reset-btn:hover {
+            background: #ff3742;
+        }
+        h1 {
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Carte du Monde à Colorier</h1>
+    <div class="info-panel">
+        <p><strong>Instructions :</strong></p>
+        <p>1. Choisis une couleur dans la palette.</p>
+        <p>2. Clique sur un pays pour le colorier.</p>
+        <p>3. Utilise "Réinitialiser" pour tout effacer.</p>
+        <div class="color-palette" id="color-palette"></div>
+        <button id="reset-btn">Réinitialiser</button>
+    </div>
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Initialisation de la carte
+        const map = L.map('map').setView([20, 0], 2);
+
+        // Ajout de la couche OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Palette de couleurs
+        const colors = ['#FF5733', '#33FF57', '#3357FF', '#F3FF33', '#FF33F3', '#33FFF3'];
+        const colorPalette = document.getElementById('color-palette');
+        let selectedColor = colors[0];
+
+        colors.forEach(color => {
+            const div = document.createElement('div');
+            div.className = 'color-option';
+            div.style.backgroundColor = color;
+            div.addEventListener('click', () => {
+                selectedColor = color;
+                document.querySelectorAll('.color-option').forEach(opt => opt.style.border = '2px solid #333');
+                div.style.border = '2px solid black';
+            });
+            colorPalette.appendChild(div);
+        });
+
+        // Réinitialisation
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            localStorage.removeItem('coloredCountries');
+            location.reload();
+        });
+
+        // Chargement des pays coloriés
+        const coloredCountries = JSON.parse(localStorage.getItem('coloredCountries')) || {};
+
+        // Fonction pour appliquer la couleur à un pays
+        function colorCountry(countryId, color) {
+            const countryLayer = window.countryLayers[countryId];
+            if (countryLayer) {
+                countryLayer.setStyle({ fillColor: color });
+            }
+        }
+
+        // Exemple de pays (tu peux ajouter plus de pays)
+        const countries = [
+            { id: 'FR', name: 'France', lat: 46.2276, lng: 2.2137 },
+            { id: 'DE', name: 'Allemagne', lat: 51.1657, lng: 10.4515 },
+            { id: 'IT', name: 'Italie', lat: 41.8719, lng: 12.5674 },
+            { id: 'ES', name: 'Espagne', lat: 40.4637, lng: -3.7492 },
+            { id: 'US', name: 'États-Unis', lat: 37.0902, lng: -95.7129 },
+            { id: 'JP', name: 'Japon', lat: 36.2048, lng: 138.2529 }
+        ];
+
+        // Création des couches de pays (simplifié pour l'exemple)
+        window.countryLayers = {};
+        countries.forEach(country => {
+            const marker = L.circleMarker([country.lat, country.lng], {
+                radius: 10,
+                fillColor: coloredCountries[country.id] || '#dddddd',
+                color: '#000',
+                weight: 1,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map);
+            window.countryLayers[country.id] = marker;
+            marker.bindPopup(`<b>${country.name}</b>`);
+
+            // Gestion du clic
+            marker.on('click', () => {
+                colorCountry(country.id, selectedColor);
+                coloredCountries[country.id] = selectedColor;
+                localStorage.setItem('coloredCountries', JSON.stringify(coloredCountries));
+            });
+        });
+    </script>
+</body>
+</html>
