@@ -1,167 +1,192 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carte du Monde à Colorier (Pays Entiers)</title>
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- Leaflet-Geojson CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-geojson@2.0.0/leaflet-geojson.css" />
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-        }
-        #map {
-            height: 85vh;
-            width: 100%;
-            margin: 0 auto;
-        }
-        .info-panel {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            z-index: 1000;
-        }
-        .color-palette {
-            display: flex;
-            gap: 5px;
-            margin-top: 10px;
-        }
-        .color-option {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid #333;
-        }
-        #reset-btn {
-            margin-top: 10px;
-            padding: 8px 15px;
-            background: #ff4757;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        #reset-btn:hover {
-            background: #ff3742;
-        }
-        h1 {
-            text-align: center;
-            margin: 20px 0;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌍 Carte Interactive Stylée</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<style>
+    body {
+        margin: 0;
+        font-family: 'Segoe UI', sans-serif;
+        background: #0f172a;
+        color: white;
+    }
+
+    h1 {
+        text-align: center;
+        margin: 10px;
+        font-weight: 600;
+    }
+
+    #map {
+        height: 90vh;
+    }
+
+    .panel {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(15,23,42,0.95);
+        backdrop-filter: blur(10px);
+        padding: 15px;
+        border-radius: 12px;
+        z-index: 1000;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .palette {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .color {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: 0.2s;
+    }
+
+    .color:hover {
+        transform: scale(1.2);
+    }
+
+    .active {
+        border: 2px solid white;
+    }
+
+    button {
+        margin-top: 10px;
+        padding: 8px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    .reset { background: #ef4444; color: white; }
+    .erase { background: #64748b; color: white; }
+</style>
 </head>
+
 <body>
-    <h1>Carte du Monde à Colorier (Pays Entiers)</h1>
-    <div class="info-panel">
-        <p><strong>Instructions :</strong></p>
-        <p>1. Choisis une couleur dans la palette.</p>
-        <p>2. Clique sur un pays pour le colorier.</p>
-        <p>3. Utilise "Réinitialiser" pour tout effacer.</p>
-        <div class="color-palette" id="color-palette"></div>
-        <button id="reset-btn">Réinitialiser</button>
-    </div>
-    <div id="map"></div>
 
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Leaflet-Geojson JS -->
-    <script src="https://cdn.jsdelivr.net/npm/leaflet-geojson@2.0.0/leaflet-geojson.js"></script>
-    <script>
-        // Initialisation de la carte
-        const map = L.map('map').setView([20, 0], 2);
+<h1>🌍 Carte à Colorier Pro</h1>
 
-        // Ajout de la couche OpenStreetMap
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
+<div class="panel">
+    <b>🎨 Couleurs :</b>
+    <div class="palette" id="palette"></div>
 
-        // Palette de couleurs
-        const colors = ['#FF5733', '#33FF57', '#3357FF', '#F3FF33', '#FF33F3', '#33FFF3'];
-        const colorPalette = document.getElementById('color-palette');
-        let selectedColor = colors[0];
+    <button class="erase" onclick="eraseMode()">🧽 Gomme</button>
+    <button class="reset" onclick="resetMap()">♻️ Reset</button>
+</div>
 
-        colors.forEach(color => {
-            const div = document.createElement('div');
-            div.className = 'color-option';
-            div.style.backgroundColor = color;
-            div.addEventListener('click', () => {
-                selectedColor = color;
-                document.querySelectorAll('.color-option').forEach(opt => opt.style.border = '2px solid #333');
-                div.style.border = '2px solid black';
-            });
-            colorPalette.appendChild(div);
-        });
+<div id="map"></div>
 
-        // Réinitialisation
-        document.getElementById('reset-btn').addEventListener('click', () => {
-            localStorage.removeItem('coloredCountries');
-            location.reload();
-        });
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-        // Chargement des pays coloriés
-        const coloredCountries = JSON.parse(localStorage.getItem('coloredCountries')) || {};
+<script>
+const map = L.map('map', {
+    zoomControl: false
+}).setView([20,0], 2);
 
-        // Style par défaut pour les pays
-        function getCountryStyle(countryId) {
-            return {
-                fillColor: coloredCountries[countryId] || '#dddddd',
-                weight: 1,
-                opacity: 1,
-                color: '#888',
-                fillOpacity: 0.8
-            };
-        }
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
 
-        // Fonction pour appliquer la couleur à un pays
-        function colorCountry(countryId, color) {
-            coloredCountries[countryId] = color;
-            localStorage.setItem('coloredCountries', JSON.stringify(coloredCountries));
-            if (window.countryLayers && window.countryLayers[countryId]) {
-                window.countryLayers[countryId].setStyle({ fillColor: color });
-            }
-        }
+L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // Exemple de GeoJSON simplifié pour les pays (tu peux remplacer par un vrai GeoJSON)
-        const countriesGeoJSON = {
-            "type": "FeatureCollection",
-            "features": [
-                { "type": "Feature", "properties": { "name": "France", "id": "FR" }, "geometry": { "type": "Polygon", "coordinates": [ [ [2.2137, 46.2276], [2.2137, 46.2276] ] ] } },
-                { "type": "Feature", "properties": { "name": "Allemagne", "id": "DE" }, "geometry": { "type": "Polygon", "coordinates": [ [ [10.4515, 51.1657], [10.4515, 51.1657] ] ] } },
-                { "type": "Feature", "properties": { "name": "Italie", "id": "IT" }, "geometry": { "type": "Polygon", "coordinates": [ [ [12.5674, 41.8719], [12.5674, 41.8719] ] ] } },
-                { "type": "Feature", "properties": { "name": "Espagne", "id": "ES" }, "geometry": { "type": "Polygon", "coordinates": [ [ [-3.7492, 40.4637], [-3.7492, 40.4637] ] ] } },
-                { "type": "Feature", "properties": { "name": "États-Unis", "id": "US" }, "geometry": { "type": "Polygon", "coordinates": [ [ [-95.7129, 37.0902], [-95.7129, 37.0902] ] ] } },
-                { "type": "Feature", "properties": { "name": "Japon", "id": "JP" }, "geometry": { "type": "Polygon", "coordinates": [ [ [138.2529, 36.2048], [138.2529, 36.2048] ] ] } }
-            ]
-        };
+const colors = [
+    "#ef4444","#f97316","#eab308","#22c55e",
+    "#06b6d4","#3b82f6","#8b5cf6","#ec4899"
+];
 
-        // Ajout des pays à la carte
-        const countryLayers = {};
-        countriesGeoJSON.features.forEach(feature => {
-            const countryId = feature.properties.id;
-            const countryName = feature.properties.name;
-            const geojson = L.geoJSON(feature, {
-                style: getCountryStyle(countryId),
-                onEachFeature: function (feature, layer) {
-                    layer.bindPopup(`<b>${countryName}</b>`);
-                    layer.on('click', () => {
-                        colorCountry(countryId, selectedColor);
-                    });
-                }
-            });
-            geojson.addTo(map);
-            countryLayers[countryId] = geojson;
-        });
-        window.countryLayers = countryLayers;
-    </script>
+let selectedColor = colors[0];
+let erase = false;
+
+const palette = document.getElementById("palette");
+
+colors.forEach(c => {
+    const el = document.createElement("div");
+    el.className = "color";
+    el.style.background = c;
+    el.onclick = () => {
+        erase = false;
+        selectedColor = c;
+        document.querySelectorAll(".color").forEach(e=>e.classList.remove("active"));
+        el.classList.add("active");
+    };
+    palette.appendChild(el);
+});
+
+palette.children[0].classList.add("active");
+
+function eraseMode(){
+    erase = true;
+}
+
+function resetMap(){
+    localStorage.clear();
+    location.reload();
+}
+
+const saved = JSON.parse(localStorage.getItem("mapColors") || "{}");
+
+function style(feature){
+    return {
+        fillColor: saved[feature.id] || "#1e293b",
+        weight: 0.5,
+        color: "#475569",
+        fillOpacity: 0.8
+    };
+}
+
+function highlight(e){
+    e.target.setStyle({
+        weight: 2,
+        color: "#fff"
+    });
+}
+
+function resetHighlight(e){
+    geojson.resetStyle(e.target);
+}
+
+function clickFeature(e){
+    const id = e.target.feature.id;
+    if(erase){
+        delete saved[id];
+    } else {
+        saved[id] = selectedColor;
+    }
+    localStorage.setItem("mapColors", JSON.stringify(saved));
+    e.target.setStyle({ fillColor: saved[id] || "#1e293b" });
+}
+
+function onEach(feature, layer){
+    layer.on({
+        mouseover: highlight,
+        mouseout: resetHighlight,
+        click: clickFeature
+    });
+    layer.bindTooltip(feature.properties.name);
+}
+
+let geojson;
+
+fetch("https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json")
+.then(res => res.json())
+.then(data => {
+    geojson = L.geoJSON(data, {
+        style: style,
+        onEachFeature: onEach
+    }).addTo(map);
+});
+</script>
+
 </body>
 </html>
