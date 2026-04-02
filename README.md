@@ -1,6 +1,6 @@
 # epigone-world-map
 
-Une carte interactive du monde où tu peux cliquer sur les pays pour les colorier.
+Une carte interactive du monde où tu peux cliquer sur les **pays entiers** pour les colorier.
 
 ## 🌍 Utilisation
 
@@ -11,5 +11,11 @@ Une carte interactive du monde où tu peux cliquer sur les pays pour les colorie
 
 ## 🛠️ Personnalisation
 
-- Pour ajouter plus de pays, modifie le tableau `countries` dans le fichier `index.html`.
-- Pour changer les couleurs, modifie le tableau `colors` dans le fichier `index.html`.
+- Pour ajouter plus de pays, modifie le tableau `countriesGeoJSON` dans `index.html`.
+- Pour changer les couleurs, modifie le tableau `colors` dans `index.html`.
+
+## 📌 Note
+
+Pour l'instant, la carte utilise un exemple de GeoJSON simplifié. Si tu veux une carte avec **tous les pays**, il faut remplacer le GeoJSON par un fichier complet (ex : [Natural Earth Data](https://www.naturalearthdata.com/)).
+
+👉 **Veux-tu que je t’aide à ajouter un GeoJSON complet ?**
